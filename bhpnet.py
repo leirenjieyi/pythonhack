@@ -84,6 +84,7 @@ def main():
         strbuff += '\n'
         client_sender(strbuff)
     if listen:
+        server_loop()
 
 
 def client_sender(strbuff):
@@ -129,8 +130,47 @@ def server_loop():
         client_thread.start()
 
 def client_hander(client):
-    pass
+    global command
+    global upload
+    global execute
+    global upload_destination
 
+    if len(upload_destination):
+        file_buff=''
+        while True:
+            data=client.recv(1024)
+            if not data:
+                break
+            else:
+                file_buff+=data
+        try:
+            file_descriptor=open(upload_destination,'wb')
+            file_descriptor.write(file_buff)
+            file_descriptor.close()
+            client.send("Success to save file to %s\r\n" % upload_destination)
+        except:
+            client.send("Failed to save file to %s\r\n" % upload_destination)
+    if len(execute):
+        output=client_command(execute)
+        client.send(output)
+    if command:
+        while  True:
+            client.send('<BHP:#>')
+            command_buff=''
+            while  '\n' not in command_buff:
+                command_buff+=client.recv(1024)
+            output=client_command(command_buff)
+            client.send(output)
+
+
+
+def client_command(command):
+    command=command.rstrip()
+    try:
+        output=subprocess.check_output(command,stderr=subprocess.STDOUT,shell=True)
+    except:
+        output='Failed to execute command\r\n'
+    return output
 
 
 if __name__ == '__main__':
