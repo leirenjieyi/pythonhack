@@ -3,6 +3,7 @@ import socket
 import subprocess
 import sys
 import threading
+import pdb
 
 listen = False
 command = False
@@ -78,16 +79,16 @@ def main():
             upload_destination = a
         else:
             assert False, 'Unkonw option.'
-
+    
     if not listen and len(target) and port > 0:
-        strbuff = input("->")
-        strbuff += '\n'
-        client_sender(strbuff)
+        # strbuff = input("->")
+        # strbuff += '\n'
+        client_sender()
     if listen:
         server_loop()
 
 
-def client_sender(strbuff):
+def client_sender():
     """
     Args:strbuff
     Returns:none
@@ -97,21 +98,23 @@ def client_sender(strbuff):
     client = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     try:
         client.connect((target, port))
-        if len(strbuff):
-            client.send(strbuff)
+        # if len(strbuff):
+        #     client.send(strbuff.encode())
         while True:
             recv_len = 1
             response = ''
             while recv_len:
                 data = client.recv(4096)
                 recv_len = len(data)
-                response += data
+                response += data.decode()
                 if recv_len < 4096:
                     break
-            print(response)
-            strbuff = input("->")
-            strbuff += '\n'
-            client.send(strbuff)
+            if '\n' in response:
+                print(response,end='')
+            else:
+                strbuff = input(response)
+                strbuff += '\n'
+                client.send(strbuff.encode())
     except:
         print("[*] Exception exit.")
 
